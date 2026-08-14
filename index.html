@@ -1,1 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0">
+
+<title>Pastor Mays Gala Check In</title>
+
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #f3f3f3;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,.12);
+}
+
+h1 {
+  text-align: center;
+  margin-top: 0;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+input {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #111;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+button:disabled {
+  opacity: .5;
+}
+
+.secondary {
+  background: #555;
+}
+
+.success {
+  background: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.warning {
+  background: #fff3cd;
+  color: #856404;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.error {
+  color: #b00020;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.center {
+  text-align: center;
+}
+
+.guest-name {
+  font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.table {
+  font-size: 38px;
+  font-weight: bold;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.ticket-id {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+#scanner {
+  width: 100%;
+  margin-top: 15px;
+}
+
+#scannerArea {
+  display: none;
+}
+
+#guestCard {
+  display: none;
+}
+
+#loginCard {
+  display: block;
+}
+
+#cameraStatus {
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+
+<!-- LOGIN -->
+
+<div
+  id="loginCard"
+  class="card">
+
+<h1>
+Pastor Mays Gala
+</h1>
+
+<p class="center">
+Registration Check In
+</p>
+
+<label>
+Staff PIN
+</label>
+
+<input
+  id="pin"
+  type="password"
+  inputmode="numeric"
+  placeholder="Enter staff PIN">
+
+<button
+  onclick="unlock()">
+
+UNLOCK CHECK IN
+
+</button>
+
+<div
+  id="loginError"
+  class="error">
+</div>
+
+</div>
+
+
+<!-- SCANNER -->
+
+<div
+  id="scannerArea">
+
+
+<div class="card">
+
+<h1>
+Scan Ticket
+</h1>
+
+
+<div
+  id="cameraStatus">
+
+Starting camera...
+
+</div>
+
+
+<div id="scanner"></div>
+
+
+<p class="center">
+Point the camera at the guest's QR code.
+</p>
+
+
+<hr>
+
+
+<label>
+Or enter Ticket ID
+</label>
+
+<input
+  id="manualTicket"
+  placeholder="AW40-XXXXXXXX"
+  autocomplete="off">
+
+<button
+  onclick="manualLookup()">
+
+LOOK UP TICKET
+
+</button>
+
+
+<div
+  id="scannerError"
+  class="error">
+</div>
+
+</div>
+
+
+<!-- GUEST -->
+
+<div
+  id="guestCard"
+  class="card">
+
+
+<div
+  id="guestName"
+  class="guest-name">
+</div>
+
+
+<div
+  id="guestVIP"
+  class="center">
+</div>
+
+
+<div
+  id="guestTable"
+  class="table">
+</div>
+
+
+<div
+  id="guestTicketID"
+  class="ticket-id">
+</div>
+
+
+<div
+  id="guestStatus">
+</div>
+
+
+<button
+  id="checkInButton"
+  onclick="checkIn()">
+
+CHECK IN GUEST
+
+</button>
+
+
+<div
+  id="checkInMessage">
+</div>
+
+
+<button
+  class="secondary"
+  onclick="scanAnother()">
+
+SCAN ANOTHER TICKET
+
+</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+
+/******************************************************
+ * SETTINGS
+ ******************************************************/
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbxMIXvDLYnEp3Sdnid-_TIU8eW7ZAnnUCKj6IZ-65vW_8otla2BwQPDGSFf8BU9E6s/exec";
+
+
+let staffPIN = "";
+
+let currentTicketID = "";
+
+let html5QrCode = null;
+
+let scannerRunning = false;
+
+
+/******************************************************
+ * UNLOCK
+ ******************************************************/
+
+function unlock() {
+
+  const pin =
+    document
+      .getElementById("pin")
+      .value
+      .trim();
+
+
+  if (pin !== "1986") {
+
+    document
+      .getElementById("loginError")
+      .innerText =
+      "Invalid staff PIN.";
+
+    return;
+
+  }
+
+
+  staffPIN = pin;
+
+
+  document
+    .getElementById("loginCard")
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById("scannerArea")
+    .style.display =
+    "block";
+
+
+  startScanner();
+
+}
+
+
+/******************************************************
+ * START CAMERA
+ ******************************************************/
+
+function startScanner() {
+
+  const status =
+    document
+      .getElementById("cameraStatus");
+
+
+  status.innerText =
+    "Requesting camera access...";
+
+
+  html5QrCode =
+    new Html5Qrcode(
+      "scanner"
+    );
+
+
+  Html5Qrcode
+    .getCameras()
+
+    .then(
+      function(cameras) {
+
+        if (
+          !cameras ||
+          cameras.length === 0
+        ) {
+
+          status.innerText =
+            "No camera found.";
+
+          return;
+
+        }
+
+
+        let cameraID =
+          cameras[0].id;
+
+
+        /*
+         * Prefer rear camera.
+         */
+
+        const rear =
+          cameras.find(
+            function(camera) {
+
+              const label =
+                (
+                  camera.label ||
+                  ""
+                ).toLowerCase();
+
+
+              return (
+                label.includes("back") ||
+                label.includes("rear") ||
+                label.includes("environment")
+              );
+
+            }
+          );
+
+
+        if (rear) {
+
+          cameraID =
+            rear.id;
+
+        }
+
+
+        return html5QrCode
+          .start(
+
+            cameraID,
+
+            {
+              fps: 10,
+
+              qrbox: {
+                width: 250,
+                height: 250
+              },
+
+              aspectRatio: 1.0
+
+            },
+
+            function(decodedText) {
+
+              handleScan(
+                decodedText
+              );
+
+            },
+
+            function(errorMessage) {
+
+              /*
+               * Normal scanning
+               * errors are ignored.
+               */
+
+            }
+
+          );
+
+      }
+    )
+
+    .then(
+      function() {
+
+        scannerRunning =
+          true;
+
+        status.innerText =
+          "Camera ready";
+
+      }
+    )
+
+    .catch(
+      function(error) {
+
+        status.innerText =
+          "Camera could not start.";
+
+        document
+          .getElementById("scannerError")
+          .innerText =
+          "Camera error: " +
+          error;
+
+      }
+    );
+
+}
+
+
+/******************************************************
+ * HANDLE QR
+ ******************************************************/
+
+function handleScan(
+  text
+) {
+
+  if (!text) {
+    return;
+  }
+
+
+  let ticketID =
+    "";
+
+
+  try {
+
+    const url =
+      new URL(text);
+
+
+    ticketID =
+      url.searchParams
+        .get("ticket") ||
+      "";
+
+  } catch (error) {
+
+    ticketID =
+      text;
+
+  }
+
+
+  ticketID =
+    ticketID
+      .trim()
+      .toUpperCase();
+
+
+  if (
+    !ticketID.startsWith(
+      "AW40-"
+    )
+  ) {
+
+    document
+      .getElementById("scannerError")
+      .innerText =
+      "That QR code is not a gala ticket.";
+
+    return;
+
+  }
+
+
+  stopScanner();
+
+
+  lookupTicket(
+    ticketID
+  );
+
+}
+
+
+/******************************************************
+ * MANUAL LOOKUP
+ ******************************************************/
+
+function manualLookup() {
+
+  const ticketID =
+    document
+      .getElementById("manualTicket")
+      .value
+      .trim()
+      .toUpperCase();
+
+
+  if (!ticketID) {
+
+    document
+      .getElementById("scannerError")
+      .innerText =
+      "Enter a Ticket ID.";
+
+    return;
+
+  }
+
+
+  lookupTicket(
+    ticketID
+  );
+
+}
+
+
+/******************************************************
+ * LOOKUP TICKET
+ ******************************************************/
+
+function lookupTicket(
+  ticketID
+) {
+
+  currentTicketID =
+    ticketID;
+
+
+  document
+    .getElementById("scannerError")
+    .innerText =
+    "Looking up ticket...";
+
+
+  const url =
+    API_URL +
+    "?action=lookup" +
+    "&ticket=" +
+    encodeURIComponent(
+      ticketID
+    ) +
+    "&pin=" +
+    encodeURIComponent(
+      staffPIN
+    );
+
+
+  fetch(
+    url
+  )
+
+  .then(
+    function(response) {
+
+      return response.json();
+
+    }
+  )
+
+  .then(
+    function(result) {
+
+      if (
+        !result ||
+        !result.success
+      ) {
+
+        document
+          .getElementById("scannerError")
+          .innerText =
+          result &&
+          result.message
+            ? result.message
+            : "Ticket not found.";
+
+        return;
+
+      }
+
+
+      displayGuest(
+        result
+      );
+
+    }
+  )
+
+  .catch(
+    function(error) {
+
+      document
+        .getElementById("scannerError")
+        .innerText =
+        "Unable to connect to the gala system.";
+
+      console.error(
+        error
+      );
+
+    }
+  );
+
+}
+
+
+/******************************************************
+ * DISPLAY GUEST
+ ******************************************************/
+
+function displayGuest(
+  guest
+) {
+
+  document
+    .getElementById("scannerError")
+    .innerText =
+    "";
+
+
+  document
+    .getElementById("guestCard")
+    .style.display =
+    "block";
+
+
+  document
+    .getElementById("guestName")
+    .innerText =
+    guest.firstName +
+    " " +
+    guest.lastName;
+
+
+  document
+    .getElementById("guestVIP")
+    .innerText =
+    String(
+      guest.vip
+    ).toLowerCase() ===
+    "yes"
+      ? "VIP GUEST"
+      : "GENERAL GUEST";
+
+
+  document
+    .getElementById("guestTable")
+    .innerText =
+    guest.table
+      ? "TABLE " +
+        guest.table
+      : "TABLE NOT ASSIGNED";
+
+
+  document
+    .getElementById("guestTicketID")
+    .innerText =
+    "Ticket ID: " +
+    guest.ticketID;
+
+
+  const status =
+    document
+      .getElementById("guestStatus");
+
+
+  const button =
+    document
+      .getElementById("checkInButton");
+
+
+  if (
+    String(
+      guest.checkedIn
+    )
+      .toLowerCase()
+      ===
+    "yes"
+  ) {
+
+    status.className =
+      "success";
+
+
+    status.innerText =
+      "ALREADY CHECKED IN";
+
+
+    button.style.display =
+      "none";
+
+  } else {
+
+    status.className =
+      "warning";
+
+
+    status.innerText =
+      "NOT CHECKED IN";
+
+
+    button.style.display =
+      "block";
+
+
+    button.disabled =
+      false;
+
+
+    button.innerText =
+      "CHECK IN GUEST";
+
+  }
+
+}
+
+
+/******************************************************
+ * CHECK IN
+ ******************************************************/
+
+function checkIn() {
+
+  const button =
+    document
+      .getElementById("checkInButton");
+
+
+  const message =
+    document
+      .getElementById("checkInMessage");
+
+
+  button.disabled =
+    true;
+
+
+  button.innerText =
+    "CHECKING IN...";
+
+
+  const url =
+    API_URL +
+    "?action=checkin" +
+    "&ticket=" +
+    encodeURIComponent(
+      currentTicketID
+    ) +
+    "&pin=" +
+    encodeURIComponent(
+      staffPIN
+    );
+
+
+  fetch(
+    url
+  )
+
+  .then(
+    function(response) {
+
+      return response.json();
+
+    }
+  )
+
+  .then(
+    function(result) {
+
+
+      if (
+        result &&
+        result.success
+      ) {
+
+        document
+          .getElementById("guestStatus")
+          .className =
+          "success";
+
+
+        document
+          .getElementById("guestStatus")
+          .innerText =
+          "CHECKED IN";
+
+
+        button.style.display =
+          "none";
+
+
+        message.className =
+          "success";
+
+
+        message.innerText =
+          "✓ Guest checked in successfully.";
+
+        return;
+
+      }
+
+
+      if (
+        result &&
+        result.alreadyCheckedIn
+      ) {
+
+        document
+          .getElementById("guestStatus")
+          .className =
+          "success";
+
+
+        document
+          .getElementById("guestStatus")
+          .innerText =
+          "ALREADY CHECKED IN";
+
+
+        button.style.display =
+          "none";
+
+
+        message.className =
+          "error";
+
+
+        message.innerText =
+          "This ticket has already been checked in.";
+
+        return;
+
+      }
+
+
+      button.disabled =
+        false;
+
+
+      button.innerText =
+        "CHECK IN GUEST";
+
+
+      message.className =
+        "error";
+
+
+      message.innerText =
+        result &&
+        result.message
+          ? result.message
+          : "Unable to check in ticket.";
+
+    }
+  )
+
+  .catch(
+    function(error) {
+
+      button.disabled =
+        false;
+
+
+      button.innerText =
+        "CHECK IN GUEST";
+
+
+      message.className =
+        "error";
+
+
+      message.innerText =
+        "Unable to connect to the gala system.";
+
+      console.error(
+        error
+      );
+
+    }
+  );
+
+}
+
+
+/******************************************************
+ * STOP SCANNER
+ ******************************************************/
+
+function stopScanner() {
+
+  if (
+    !html5QrCode ||
+    !scannerRunning
+  ) {
+
+    return;
+
+  }
+
+
+  html5QrCode
+    .stop()
+
+    .then(
+      function() {
+
+        scannerRunning =
+          false;
+
+      }
+    )
+
+    .catch(
+      function() {
+
+        scannerRunning =
+          false;
+
+      }
+    );
+
+}
+
+
+/******************************************************
+ * SCAN ANOTHER
+ ******************************************************/
+
+function scanAnother() {
+
+  document
+    .getElementById("guestCard")
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById("manualTicket")
+    .value =
+    "";
+
+
+  document
+    .getElementById("checkInMessage")
+    .innerText =
+    "";
+
+
+  document
+    .getElementById("scannerError")
+    .innerText =
+    "";
+
+
+  startScanner();
+
+}
+
+</script>
+
+</body>
+
+</html>
