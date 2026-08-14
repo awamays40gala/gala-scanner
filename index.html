@@ -5,9 +5,13 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0">
 
-<title>Pastor Mays Gala Check In</title>
+<title>
+Pastor A. W. Anthony Mays 40th Pastoral Anniversary Gala Check In
+</title>
 
 <script
   src="https://unpkg.com/html5-qrcode"
@@ -43,6 +47,10 @@ body {
 h1 {
   text-align: center;
   margin-top: 0;
+}
+
+h2 {
+  text-align: center;
 }
 
 label {
@@ -132,6 +140,7 @@ button:disabled {
   color: #666;
   font-size: 14px;
   word-break: break-all;
+  margin-top: 10px;
 }
 
 #scanner {
@@ -157,6 +166,12 @@ button:disabled {
   margin: 10px 0;
 }
 
+hr {
+  border: 0;
+  border-top: 1px solid #ddd;
+  margin: 25px 0;
+}
+
 </style>
 
 </head>
@@ -166,9 +181,13 @@ button:disabled {
 <div class="container">
 
 
-<!-- LOGIN -->
+<!-- ==================================================
+     LOGIN
+================================================== -->
 
-<div id="loginCard" class="card">
+<div
+  id="loginCard"
+  class="card">
 
 <h1>
 Pastor Mays Gala
@@ -188,31 +207,50 @@ Staff PIN
   inputmode="numeric"
   placeholder="Enter staff PIN">
 
-<button onclick="unlock()">
+<button
+  onclick="unlock()">
+
 UNLOCK CHECK IN
+
 </button>
 
-<div id="loginError" class="error">
+<div
+  id="loginError"
+  class="error">
 </div>
 
 </div>
 
 
-<!-- SCANNER -->
+<!-- ==================================================
+     SCANNER AREA
+================================================== -->
 
-<div id="scannerArea">
+<div
+  id="scannerArea">
 
-<div class="card">
+
+<!-- ==================================================
+     SCANNER
+================================================== -->
+
+<div
+  class="card">
 
 <h1>
 Scan Ticket
 </h1>
 
-<div id="cameraStatus">
+<div
+  id="cameraStatus">
+
 Starting camera...
+
 </div>
 
-<div id="scanner"></div>
+<div
+  id="scanner">
+</div>
 
 <p class="center">
 Point the camera at the guest's QR code.
@@ -229,48 +267,71 @@ Or enter Ticket ID
   placeholder="PM40-XXXXXXXX"
   autocomplete="off">
 
-<button onclick="manualLookup()">
+<button
+  onclick="manualLookup()">
+
 LOOK UP TICKET
+
 </button>
 
-<div id="scannerError" class="error">
+<div
+  id="scannerError"
+  class="error">
 </div>
 
 </div>
 
 
-<!-- GUEST INFORMATION -->
+<!-- ==================================================
+     GUEST INFORMATION
+================================================== -->
 
-<div id="guestCard" class="card">
+<div
+  id="guestCard"
+  class="card">
 
-<div id="guestName" class="guest-name">
+<div
+  id="guestName"
+  class="guest-name">
 </div>
 
-<div id="guestVIP" class="center">
+<div
+  id="guestVIP"
+  class="center">
 </div>
 
-<div id="guestTable" class="table">
+<div
+  id="guestTable"
+  class="table">
 </div>
 
-<div id="guestTicketID" class="ticket-id">
+<div
+  id="guestTicketID"
+  class="ticket-id">
 </div>
 
-<div id="guestStatus">
+<div
+  id="guestStatus">
 </div>
 
 <button
   id="checkInButton"
   onclick="checkIn()">
+
 CHECK IN GUEST
+
 </button>
 
-<div id="checkInMessage">
+<div
+  id="checkInMessage">
 </div>
 
 <button
   class="secondary"
   onclick="scanAnother()">
+
 SCAN ANOTHER TICKET
+
 </button>
 
 </div>
@@ -288,18 +349,29 @@ SCAN ANOTHER TICKET
 const API_URL =
 "https://script.google.com/macros/s/AKfycbxMIXvDLYnEp3Sdnid-_TIU8eW7ZAnnUCKj6IZ-65vW_8otla2BwQPDGSFf8BU9E6s/exec";
 
-const STAFF_PIN = "1986";
 
-const TICKET_PREFIX = "PM40-";
+const STAFF_PIN =
+"1986";
 
 
-let staffPIN = "";
+const TICKET_PREFIX =
+"PM40-";
 
-let currentTicketID = "";
 
-let html5QrCode = null;
+let staffPIN =
+"";
 
-let scannerRunning = false;
+
+let currentTicketID =
+"";
+
+
+let html5QrCode =
+null;
+
+
+let scannerRunning =
+false;
 
 
 /******************************************************
@@ -314,7 +386,10 @@ function unlock() {
       .value
       .trim();
 
-  if (pin !== STAFF_PIN) {
+
+  if (
+    pin !== STAFF_PIN
+  ) {
 
     document
       .getElementById("loginError")
@@ -325,22 +400,28 @@ function unlock() {
 
   }
 
-  staffPIN = pin;
+
+  staffPIN =
+    pin;
+
 
   document
     .getElementById("loginError")
     .innerText =
     "";
 
+
   document
     .getElementById("loginCard")
     .style.display =
     "none";
 
+
   document
     .getElementById("scannerArea")
     .style.display =
     "block";
+
 
   startScanner();
 
@@ -357,18 +438,25 @@ function startScanner() {
     document
       .getElementById("cameraStatus");
 
+
   status.innerText =
     "Requesting camera access...";
 
-  document
-    .getElementById("scanner")
-    .innerHTML =
+
+  const scannerElement =
+    document
+      .getElementById("scanner");
+
+
+  scannerElement.innerHTML =
     "";
+
 
   html5QrCode =
     new Html5Qrcode(
       "scanner"
     );
+
 
   Html5Qrcode
     .getCameras()
@@ -388,18 +476,25 @@ function startScanner() {
 
         }
 
+
         let cameraID =
           cameras[0].id;
 
-        const rear =
+
+        /*
+         * Prefer the rear camera.
+         */
+
+        const rearCamera =
           cameras.find(
             function(camera) {
 
               const label =
-                (
+                String(
                   camera.label ||
                   ""
                 ).toLowerCase();
+
 
               return (
                 label.includes("back") ||
@@ -410,18 +505,23 @@ function startScanner() {
             }
           );
 
-        if (rear) {
+
+        if (
+          rearCamera
+        ) {
 
           cameraID =
-            rear.id;
+            rearCamera.id;
 
         }
+
 
         return html5QrCode.start(
 
           cameraID,
 
           {
+
             fps: 10,
 
             qrbox: {
@@ -443,7 +543,10 @@ function startScanner() {
 
           function(errorMessage) {
 
-            // Normal QR scanning errors are ignored.
+            /*
+             * Normal QR scanning errors
+             * are ignored.
+             */
 
           }
 
@@ -458,6 +561,7 @@ function startScanner() {
         scannerRunning =
           true;
 
+
         status.innerText =
           "Camera ready";
 
@@ -470,14 +574,17 @@ function startScanner() {
         scannerRunning =
           false;
 
+
         status.innerText =
           "Camera could not start.";
+
 
         document
           .getElementById("scannerError")
           .innerText =
           "Camera error: " +
           error;
+
 
         console.error(
           error
@@ -497,33 +604,118 @@ function handleScan(
   text
 ) {
 
-  if (!text) {
+  if (
+    !text
+  ) {
+
     return;
-  }
-
-  let ticketID = "";
-
-  try {
-
-    const url =
-      new URL(text);
-
-    ticketID =
-      url.searchParams.get(
-        "ticket"
-      ) || "";
-
-  } catch (error) {
-
-    ticketID =
-      text;
 
   }
 
-  ticketID =
-    ticketID
+
+  /*
+   * Convert the entire QR content
+   * to uppercase.
+   */
+
+  const qrText =
+    String(
+      text
+    )
       .trim()
       .toUpperCase();
+
+
+  console.log(
+    "QR CONTENT:",
+    qrText
+  );
+
+
+  let ticketID =
+    "";
+
+
+  /*
+   * FIRST:
+   *
+   * Look for a PM40 ticket ID anywhere
+   * inside the QR content.
+   *
+   * Example:
+   *
+   * PM40-A1B2C3D4
+   *
+   * or:
+   *
+   * https://script.google.com/...ticket=PM40-A1B2C3D4
+   */
+
+  const match =
+    qrText.match(
+      /PM40-[A-Z0-9]{8}/
+    );
+
+
+  if (
+    match
+  ) {
+
+    ticketID =
+      match[0];
+
+  }
+
+
+  /*
+   * If the PM40 pattern wasn't found,
+   * try extracting a ticket parameter
+   * from a URL.
+   */
+
+  if (
+    !ticketID
+  ) {
+
+    try {
+
+      const url =
+        new URL(
+          qrText
+        );
+
+
+      const urlTicket =
+        url.searchParams.get(
+          "ticket"
+        );
+
+
+      if (
+        urlTicket
+      ) {
+
+        ticketID =
+          urlTicket
+            .trim()
+            .toUpperCase();
+
+        }
+
+    } catch (error) {
+
+      /*
+       * Not a URL.
+       */
+
+    }
+
+  }
+
+
+  /*
+   * Final validation.
+   */
 
   if (
     !ticketID.startsWith(
@@ -534,13 +726,26 @@ function handleScan(
     document
       .getElementById("scannerError")
       .innerText =
-      "That QR code is not a Pastor Mays Gala ticket.";
+      "QR detected, but no valid PM40 ticket ID was found.";
+
+    console.log(
+      "INVALID QR:",
+      qrText
+    );
 
     return;
 
   }
 
+
+  console.log(
+    "TICKET ID FOUND:",
+    ticketID
+  );
+
+
   stopScanner();
+
 
   lookupTicket(
     ticketID
@@ -562,7 +767,10 @@ function manualLookup() {
       .trim()
       .toUpperCase();
 
-  if (!ticketID) {
+
+  if (
+    !ticketID
+  ) {
 
     document
       .getElementById("scannerError")
@@ -572,6 +780,7 @@ function manualLookup() {
     return;
 
   }
+
 
   if (
     !ticketID.startsWith(
@@ -587,6 +796,7 @@ function manualLookup() {
     return;
 
   }
+
 
   lookupTicket(
     ticketID
@@ -606,10 +816,12 @@ function lookupTicket(
   currentTicketID =
     ticketID;
 
+
   document
     .getElementById("scannerError")
     .innerText =
     "Looking up ticket...";
+
 
   const url =
     API_URL +
@@ -622,6 +834,7 @@ function lookupTicket(
     encodeURIComponent(
       staffPIN
     );
+
 
   fetch(
     url
@@ -637,6 +850,12 @@ function lookupTicket(
 
   .then(
     function(result) {
+
+      console.log(
+        "LOOKUP RESULT:",
+        result
+      );
+
 
       if (
         !result ||
@@ -655,6 +874,7 @@ function lookupTicket(
 
       }
 
+
       displayGuest(
         result
       );
@@ -665,14 +885,15 @@ function lookupTicket(
   .catch(
     function(error) {
 
+      console.error(
+        error
+      );
+
+
       document
         .getElementById("scannerError")
         .innerText =
         "Unable to connect to the gala system.";
-
-      console.error(
-        error
-      );
 
     }
   );
@@ -693,10 +914,12 @@ function displayGuest(
     .innerText =
     "";
 
+
   document
     .getElementById("guestCard")
     .style.display =
     "block";
+
 
   document
     .getElementById("guestName")
@@ -705,22 +928,30 @@ function displayGuest(
     " " +
     guest.lastName;
 
+
   document
     .getElementById("guestVIP")
     .innerText =
     String(
       guest.vip
-    ).toLowerCase() === "yes"
+    ).toLowerCase() ===
+    "yes"
+
       ? "VIP GUEST"
+
       : "GENERAL GUEST";
+
 
   document
     .getElementById("guestTable")
     .innerText =
     guest.table
+
       ? "TABLE " +
         guest.table
+
       : "TABLE NOT ASSIGNED";
+
 
   document
     .getElementById("guestTicketID")
@@ -728,13 +959,16 @@ function displayGuest(
     "Ticket ID: " +
     guest.ticketID;
 
+
   const status =
     document
       .getElementById("guestStatus");
 
+
   const button =
     document
       .getElementById("checkInButton");
+
 
   if (
     String(
@@ -747,8 +981,10 @@ function displayGuest(
     status.className =
       "success";
 
+
     status.innerText =
       "ALREADY CHECKED IN";
+
 
     button.style.display =
       "none";
@@ -758,14 +994,18 @@ function displayGuest(
     status.className =
       "warning";
 
+
     status.innerText =
       "NOT CHECKED IN";
+
 
     button.style.display =
       "block";
 
+
     button.disabled =
       false;
+
 
     button.innerText =
       "CHECK IN GUEST";
@@ -785,15 +1025,19 @@ function checkIn() {
     document
       .getElementById("checkInButton");
 
+
   const message =
     document
       .getElementById("checkInMessage");
 
+
   button.disabled =
     true;
 
+
   button.innerText =
     "CHECKING IN...";
+
 
   const url =
     API_URL +
@@ -806,6 +1050,7 @@ function checkIn() {
     encodeURIComponent(
       staffPIN
     );
+
 
   fetch(
     url
@@ -822,6 +1067,12 @@ function checkIn() {
   .then(
     function(result) {
 
+      console.log(
+        "CHECK IN RESULT:",
+        result
+      );
+
+
       if (
         result &&
         result.success
@@ -832,23 +1083,29 @@ function checkIn() {
           .className =
           "success";
 
+
         document
           .getElementById("guestStatus")
           .innerText =
           "CHECKED IN";
 
+
         button.style.display =
           "none";
+
 
         message.className =
           "success";
 
+
         message.innerText =
           "✓ Guest checked in successfully.";
+
 
         return;
 
       }
+
 
       if (
         result &&
@@ -860,37 +1117,48 @@ function checkIn() {
           .className =
           "success";
 
+
         document
           .getElementById("guestStatus")
           .innerText =
           "ALREADY CHECKED IN";
 
+
         button.style.display =
           "none";
+
 
         message.className =
           "error";
 
+
         message.innerText =
           "This ticket has already been checked in.";
+
 
         return;
 
       }
 
+
       button.disabled =
         false;
+
 
       button.innerText =
         "CHECK IN GUEST";
 
+
       message.className =
-        "error";
+      "error";
+
 
       message.innerText =
         result &&
         result.message
+
           ? result.message
+
           : "Unable to check in ticket.";
 
     }
@@ -899,21 +1167,25 @@ function checkIn() {
   .catch(
     function(error) {
 
+      console.error(
+        error
+      );
+
+
       button.disabled =
         false;
+
 
       button.innerText =
         "CHECK IN GUEST";
 
+
       message.className =
         "error";
 
+
       message.innerText =
         "Unable to connect to the gala system.";
-
-      console.error(
-        error
-      );
 
     }
   );
@@ -936,6 +1208,7 @@ function stopScanner() {
 
   }
 
+
   html5QrCode
     .stop()
 
@@ -949,7 +1222,12 @@ function stopScanner() {
     )
 
     .catch(
-      function() {
+      function(error) {
+
+        console.error(
+          error
+        );
+
 
         scannerRunning =
           false;
@@ -971,20 +1249,30 @@ function scanAnother() {
     .style.display =
     "none";
 
+
   document
     .getElementById("manualTicket")
     .value =
     "";
+
 
   document
     .getElementById("checkInMessage")
     .innerText =
     "";
 
+
+  document
+    .getElementById("guestStatus")
+    .innerText =
+    "";
+
+
   document
     .getElementById("scannerError")
     .innerText =
     "";
+
 
   startScanner();
 
