@@ -121,26 +121,25 @@ button:disabled {
   text-align: center;
 }
 
-.guest-name {
+.ticket-id {
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  word-break: break-all;
+  margin: 20px 0;
+}
+
+.ticket-type {
   font-size: 30px;
   font-weight: bold;
   text-align: center;
-  margin: 15px 0;
+  margin: 20px 0;
 }
 
-.table {
-  font-size: 38px;
-  font-weight: bold;
-  text-align: center;
-  margin: 15px 0;
-}
-
-.ticket-id {
+.check-time {
   text-align: center;
   color: #666;
-  font-size: 14px;
-  word-break: break-all;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 #scanner {
@@ -152,7 +151,7 @@ button:disabled {
   display: none;
 }
 
-#guestCard {
+#ticketCard {
   display: none;
 }
 
@@ -223,19 +222,14 @@ UNLOCK CHECK IN
 
 
 <!-- ==================================================
-     SCANNER AREA
+     SCANNER
 ================================================== -->
 
 <div
   id="scannerArea">
 
 
-<!-- ==================================================
-     SCANNER
-================================================== -->
-
-<div
-  class="card">
+<div class="card">
 
 <h1>
 Scan Ticket
@@ -283,42 +277,41 @@ LOOK UP TICKET
 
 
 <!-- ==================================================
-     GUEST INFORMATION
+     TICKET INFORMATION
 ================================================== -->
 
 <div
-  id="guestCard"
+  id="ticketCard"
   class="card">
 
-<div
-  id="guestName"
-  class="guest-name">
-</div>
+<h2>
+Ticket Information
+</h2>
 
 <div
-  id="guestVIP"
-  class="center">
-</div>
-
-<div
-  id="guestTable"
-  class="table">
-</div>
-
-<div
-  id="guestTicketID"
+  id="ticketID"
   class="ticket-id">
 </div>
 
 <div
-  id="guestStatus">
+  id="ticketType"
+  class="ticket-type">
+</div>
+
+<div
+  id="ticketStatus">
+</div>
+
+<div
+  id="checkTime"
+  class="check-time">
 </div>
 
 <button
   id="checkInButton"
   onclick="checkIn()">
 
-CHECK IN GUEST
+CHECK IN TICKET
 
 </button>
 
@@ -458,6 +451,10 @@ function startScanner() {
     );
 
 
+  Html5QrCode
+    .getCameras();
+
+
   Html5Qrcode
     .getCameras()
 
@@ -480,10 +477,6 @@ function startScanner() {
         let cameraID =
           cameras[0].id;
 
-
-        /*
-         * Prefer the rear camera.
-         */
 
         const rearCamera =
           cameras.find(
@@ -543,10 +536,7 @@ function startScanner() {
 
           function(errorMessage) {
 
-            /*
-             * Normal QR scanning errors
-             * are ignored.
-             */
+            // Normal scanning errors ignored.
 
           }
 
@@ -613,11 +603,6 @@ function handleScan(
   }
 
 
-  /*
-   * Convert the entire QR content
-   * to uppercase.
-   */
-
   const qrText =
     String(
       text
@@ -637,18 +622,7 @@ function handleScan(
 
 
   /*
-   * FIRST:
-   *
-   * Look for a PM40 ticket ID anywhere
-   * inside the QR content.
-   *
-   * Example:
-   *
-   * PM40-A1B2C3D4
-   *
-   * or:
-   *
-   * https://script.google.com/...ticket=PM40-A1B2C3D4
+   * Find PM40 ticket ID.
    */
 
   const match =
@@ -668,9 +642,8 @@ function handleScan(
 
 
   /*
-   * If the PM40 pattern wasn't found,
-   * try extracting a ticket parameter
-   * from a URL.
+   * If QR contains a URL,
+   * look for ?ticket=
    */
 
   if (
@@ -681,7 +654,7 @@ function handleScan(
 
       const url =
         new URL(
-          qrText
+          text
         );
 
 
@@ -700,22 +673,16 @@ function handleScan(
             .trim()
             .toUpperCase();
 
-        }
+      }
 
     } catch (error) {
 
-      /*
-       * Not a URL.
-       */
+      // Not a URL.
 
     }
 
   }
 
-
-  /*
-   * Final validation.
-   */
 
   if (
     !ticketID.startsWith(
@@ -726,22 +693,11 @@ function handleScan(
     document
       .getElementById("scannerError")
       .innerText =
-      "QR detected, but no valid PM40 ticket ID was found.";
-
-    console.log(
-      "INVALID QR:",
-      qrText
-    );
+      "QR detected, but no valid PM40 Ticket ID was found.";
 
     return;
 
   }
-
-
-  console.log(
-    "TICKET ID FOUND:",
-    ticketID
-  );
 
 
   stopScanner();
@@ -875,7 +831,7 @@ function lookupTicket(
       }
 
 
-      displayGuest(
+      displayTicket(
         result
       );
 
@@ -902,11 +858,11 @@ function lookupTicket(
 
 
 /******************************************************
- * DISPLAY GUEST
+ * DISPLAY TICKET
  ******************************************************/
 
-function displayGuest(
-  guest
+function displayTicket(
+  ticket
 ) {
 
   document
@@ -916,53 +872,49 @@ function displayGuest(
 
 
   document
-    .getElementById("guestCard")
+    .getElementById("ticketCard")
     .style.display =
     "block";
 
 
   document
-    .getElementById("guestName")
+    .getElementById("ticketID")
     .innerText =
-    guest.firstName +
-    " " +
-    guest.lastName;
+    ticket.ticketID;
 
 
-  document
-    .getElementById("guestVIP")
-    .innerText =
+  const vip =
     String(
-      guest.vip
-    ).toLowerCase() ===
+      ticket.vip || ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const type =
+    document
+      .getElementById("ticketType");
+
+
+  if (
+    vip ===
     "yes"
+  ) {
 
-      ? "VIP GUEST"
+    type.innerText =
+      "VIP TICKET";
 
-      : "GENERAL GUEST";
+  } else {
 
+    type.innerText =
+      "GENERAL TICKET";
 
-  document
-    .getElementById("guestTable")
-    .innerText =
-    guest.table
-
-      ? "TABLE " +
-        guest.table
-
-      : "TABLE NOT ASSIGNED";
-
-
-  document
-    .getElementById("guestTicketID")
-    .innerText =
-    "Ticket ID: " +
-    guest.ticketID;
+  }
 
 
   const status =
     document
-      .getElementById("guestStatus");
+      .getElementById("ticketStatus");
 
 
   const button =
@@ -970,11 +922,21 @@ function displayGuest(
       .getElementById("checkInButton");
 
 
-  if (
+  const checkTime =
+    document
+      .getElementById("checkTime");
+
+
+  const checkedIn =
     String(
-      guest.checkedIn
+      ticket.checkedIn || ""
     )
-      .toLowerCase() ===
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    checkedIn ===
     "yes"
   ) {
 
@@ -984,6 +946,13 @@ function displayGuest(
 
     status.innerText =
       "ALREADY CHECKED IN";
+
+
+    checkTime.innerText =
+      ticket.checkInTime
+        ? "Checked in: " +
+          ticket.checkInTime
+        : "";
 
 
     button.style.display =
@@ -999,6 +968,10 @@ function displayGuest(
       "NOT CHECKED IN";
 
 
+    checkTime.innerText =
+      "";
+
+
     button.style.display =
       "block";
 
@@ -1008,7 +981,7 @@ function displayGuest(
 
 
     button.innerText =
-      "CHECK IN GUEST";
+      "CHECK IN TICKET";
 
   }
 
@@ -1079,15 +1052,24 @@ function checkIn() {
       ) {
 
         document
-          .getElementById("guestStatus")
+          .getElementById("ticketStatus")
           .className =
           "success";
 
 
         document
-          .getElementById("guestStatus")
+          .getElementById("ticketStatus")
           .innerText =
           "CHECKED IN";
+
+
+        document
+          .getElementById("checkTime")
+          .innerText =
+          result.checkInTime
+            ? "Checked in: " +
+              result.checkInTime
+            : "";
 
 
         button.style.display =
@@ -1099,8 +1081,7 @@ function checkIn() {
 
 
         message.innerText =
-          "✓ Guest checked in successfully.";
-
+          "✓ Ticket checked in successfully.";
 
         return;
 
@@ -1113,15 +1094,24 @@ function checkIn() {
       ) {
 
         document
-          .getElementById("guestStatus")
+          .getElementById("ticketStatus")
           .className =
           "success";
 
 
         document
-          .getElementById("guestStatus")
+          .getElementById("ticketStatus")
           .innerText =
           "ALREADY CHECKED IN";
+
+
+        document
+          .getElementById("checkTime")
+          .innerText =
+          result.checkInTime
+            ? "Checked in: " +
+              result.checkInTime
+            : "";
 
 
         button.style.display =
@@ -1135,7 +1125,6 @@ function checkIn() {
         message.innerText =
           "This ticket has already been checked in.";
 
-
         return;
 
       }
@@ -1146,19 +1135,17 @@ function checkIn() {
 
 
       button.innerText =
-        "CHECK IN GUEST";
+        "CHECK IN TICKET";
 
 
       message.className =
-      "error";
+        "error";
 
 
       message.innerText =
         result &&
         result.message
-
           ? result.message
-
           : "Unable to check in ticket.";
 
     }
@@ -1177,7 +1164,7 @@ function checkIn() {
 
 
       button.innerText =
-        "CHECK IN GUEST";
+        "CHECK IN TICKET";
 
 
       message.className =
@@ -1239,13 +1226,13 @@ function stopScanner() {
 
 
 /******************************************************
- * SCAN ANOTHER TICKET
+ * SCAN ANOTHER
  ******************************************************/
 
 function scanAnother() {
 
   document
-    .getElementById("guestCard")
+    .getElementById("ticketCard")
     .style.display =
     "none";
 
@@ -1263,7 +1250,13 @@ function scanAnother() {
 
 
   document
-    .getElementById("guestStatus")
+    .getElementById("ticketStatus")
+    .innerText =
+    "";
+
+
+  document
+    .getElementById("checkTime")
     .innerText =
     "";
 
